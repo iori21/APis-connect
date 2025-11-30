@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de diseño para subestaciones que se conectan BESS</title>
+    <meta name="description"
+        content="Guía técnica avanzada para diseño de subestaciones BESS. Basada en CIGRE 869, IEEE 1547 y NFPA 855. Topologías, protección, seguridad y control.">
+    <meta name="author" content="Portal Ingeniería Eléctrica Pro">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { DEFAULT: '#0891b2', light: '#22d3ee', dark: '#155e75' }, // Cyan
+                        secondary: { DEFAULT: '#2563eb', light: '#60a5fa', dark: '#1e40af' }, // Blue
+                        accent: { DEFAULT: '#f59e0b', light: '#fbbf24' }, // Amber
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b',
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    lineHeight: { 'tight-custom': '1.4' }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .dark .glass-panel {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .dark .nav-link {
+            color: #94a3b8;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: #0891b2;
+            background: rgba(8, 145, 178, 0.05);
+            border-left-color: #0891b2;
+            padding-left: 1.25rem;
+        }
+
+        .dark .nav-link:hover,
+        .dark .nav-link.active {
+            color: #22d3ee;
+            background: rgba(34, 211, 238, 0.1);
+            border-left-color: #22d3ee;
+        }
+
+        /* AI Assistant Styles */
+        .ai-container {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .ai-container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .ai-bubble {
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            max-width: 85%;
+            line-height: 1.5;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .ai-bot {
+            background: #f1f5f9;
+            color: #334155;
+            border-bottom-left-radius: 2px;
+            margin-right: auto;
+        }
+
+        .dark .ai-bot {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .ai-user {
+            background: linear-gradient(135deg, #0891b2, #2563eb);
+            color: white;
+            border-bottom-right-radius: 2px;
+            margin-left: auto;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Canvas Polish */
+        canvas {
+            background: radial-gradient(circle at center, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 8px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark canvas {
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-slate-50 dark:bg-darkbg text-slate-800 dark:text-slate-200 transition-colors duration-300 leading-tight-custom">
+
+    <div class="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary z-50" id="progress-bar"
+        style="width: 0%"></div>
+
+    <button id="theme-toggle"
+        class="fixed bottom-6 right-6 z-50 p-3 rounded-full bg-white dark:bg-cardbg shadow-xl border border-slate-200 dark:border-slate-700 text-primary hover:scale-110 transition-transform group"
+        aria-label="Cambiar modo de color">
+        <span
+            class="absolute right-full mr-3 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Cambiar
+            Modo</span>
+        <svg id="sun-icon" class="w-6 h-6 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+            </path>
+        </svg>
+        <svg id="moon-icon" class="w-6 h-6 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+        </svg>
+    </button>
+
+    <div class="flex min-h-screen bg-slate-50 dark:bg-darkbg">
+        <aside
+            class="hidden lg:flex w-72 fixed h-screen flex-col overflow-y-auto border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-cardbg z-40">
+            <div class="p-6 flex-1 flex flex-col gap-10">
+                <div>
+                    <div class="flex items-center gap-3 text-primary font-extrabold text-xl tracking-tight">
+                        <div
+                            class="w-8 h-8 rounded bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p>Subestaciones BESS</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 space-y-3 text-xs text-slate-500">
+                        <!-- Indicators removed as per request -->
+                    </div>
+                </div>
+
+                <nav class="space-y-1 text-sm" aria-label="Secciones del artículo">
+                    <a href="#intro" class="nav-link">1. Introducción y Drivers</a>
+                    <a href="#fluctuation" class="nav-link">2. Desafíos Técnicos</a>
+                    <a href="#desafios-tecnicos" class="nav-link pl-8 text-xs">↳ Redes Débiles</a>
+                    <a href="#technology" class="nav-link">3. Tecnología BESS</a>
+                    <a href="#topologias" class="nav-link">4. Topologías</a>
+                    <a href="#control" class="nav-link">5. Control y Protección</a>
+                    <a href="#protecciones-adaptativas" class="nav-link pl-8 text-xs">↳ Protecciones Adaptativas</a>
+                    <a href="#normativas" class="nav-link">6. Normativa e Instalación</a>
+                    <a href="#estudios-coordinacion" class="nav-link pl-8 text-xs">↳ Estudios Coordinación</a>
+                    <a href="#mantenimiento" class="nav-link">7. Mantenimiento</a>
+                    <a href="#casos" class="nav-link">8. Casos de Éxito</a>
+                    <a href="#caso-detallado" class="nav-link pl-8 text-xs">↳ Caso Detallado</a>
+                    <a href="#ai-assistant" class="nav-link">9. Asistente experto</a>
+                </nav>
+
+                <div class="mt-auto space-y-3">
+                    <!-- Flow animation controls removed -->
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 lg:ml-72">
+            <section class="px-6 py-16 lg:py-20">
+                <div class="max-w-5xl mx-auto grid gap-12 lg:grid-cols-[1.2fr_0.8fr] items-center">
+                    <div class="space-y-6">
+                        <p class="text-sm uppercase text-primary font-semibold tracking-[0.3em]">CIGRE 869 · IEEE 1547 ·
+                            NFPA 855</p>
+                        <h1 class="text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white">
+                            Sistemas BESS en Subestaciones: Diseño & Operación
+                        </h1>
+                        <p class="text-base text-slate-600 dark:text-slate-300">
+                            Guía sobre diseño e integración de BESS en subestaciones. Normativas,
+                            topologías, control, protección, instalación y operación.
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <a href="#control"
+                                class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-primary/30">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.5v15m7.5-7.5h-15"></path>
+                                </svg>
+                                Ver Protecciones
+                            </a>
+                            <a href="#intro"
+                                class="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-600 font-semibold text-slate-700 dark:text-slate-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                </svg>
+                                Leer Guía
+                            </a>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                                <div class="text-2xl font-bold text-primary">50%+</div>
+                                <div class="text-xs text-slate-500">Penetración Renovables</div>
+                            </div>
+                            <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                                <div class="text-2xl font-bold text-primary">100ms</div>
+                                <div class="text-xs text-slate-500">Respuesta BESS</div>
+                            </div>
+                            <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                                <div class="text-2xl font-bold text-primary">2025</div>
+                                <div class="text-xs text-slate-500">Normativa GFM</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-panel rounded-3xl p-6 space-y-5">
+                        <p class="text-sm font-semibold text-primary tracking-widest">Resumen</p>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                            <li><strong>Drivers:</strong> Estabilidad de frecuencia e inercia sintética.</li>
+                            <li><strong>Tecnología:</strong> Li-ion LFP como estándar dominante.</li>
+                            <li><strong>Control:</strong> Transición obligatoria a Grid-Forming (GFM).</li>
+                            <li><strong>Seguridad:</strong> Cumplimiento estricto NFPA 855.</li>
+                        </ul>
+                        <div
+                            class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-4 text-xs text-slate-500 dark:text-slate-400">
+                            Basada en revisiones CIGRE y UL 9540A.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="intro" class="px-6 py-12 scroll-mt-24">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">1. Introducción y Drivers</h2>
+                    <img src="http://portal-ingenieria-electrica-pro.com/wp-content/uploads/2025/10/batery-energy-2.webp"
+                        alt="BESS Overview"
+                        class="w-full max-h-80 object-contain rounded-2xl shadow-lg mb-6 mx-auto" />
+                        
+
+                    <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">BESS en la Era de Renovables
+                    </h3>
+                    <p class="text-slate-600 dark:text-slate-300">El crecimiento exponencial de energías renovables
+                        (solar, eólica) ha transformado fundamentalmente el panorama operacional de redes eléctricas
+                        modernas. A diferencia de generadores síncronos tradicionales que proporcionaban inercia,
+                        estabilidad de voltaje y respuesta inmediata, los inversores solares y eólicos presentan
+                        características <strong>radicalmente diferentes</strong>: son rápidos en respuesta pero
+                        <strong>no proporcionan inercia nativa</strong>.
+                    </p>
+
+                    <div
+                        class="bg-cyan-50 dark:bg-cyan-900/20 border-l-4 border-primary p-4 rounded-r my-4 text-sm text-slate-700 dark:text-slate-300">
+                        <strong>📊 Dato Crítico 2025:</strong> La normativa europea ENTSO-E y estadounidense NERC ahora
+                        REQUIEREN que BESS nuevos sean de tipo Grid-Forming (GFM). Esto representa cambio fundamental en
+                        especificaciones vs equipos legacy Grid-Following (GFL).
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200 mt-8">¿Por qué Instalar BESS en
+                        Subestaciones?</h3>
+                    <p class="text-slate-600 dark:text-slate-300">Las subestaciones son puntos críticos de la red donde
+                        convergen múltiples líneas de transmisión/distribución, cargas y fuentes de generación. Instalar
+                        BESS a este nivel amplifica su impacto en toda una zona operativa.</p>
+                    <ul class="list-disc pl-6 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+                        <li><strong>Regulación de frecuencia:</strong> Respuesta <100ms (vs generadores 1-2
+                                segundos)</li>
+                        <li><strong>Soporte de voltaje:</strong> Inyección rápida de potencia reactiva y activa</li>
+                        <li><strong>Almacenamiento energético:</strong> 2-4 horas típicas de autonomía</li>
+                        <li><strong>Operación en isla:</strong> Capacidad de desconexión automática y funcionamiento
+                            autónomo</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="fluctuation" class="px-6 py-12 scroll-mt-24 bg-slate-50 dark:bg-slate-800/50">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">2. Desafíos Técnicos: Fluctuación e
+                        Inercia</h2>
+
+                    <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">Fluctuación Severa de Potencia
+                    </h3>
+                    <p class="text-slate-600 dark:text-slate-300">Solar y eólica exhiben variabilidad predecible a largo
+                        plazo pero impredecible a corto plazo. BESS de 50-200 MW puede suavizar rampas de potencia
+                        limitando variaciones a ±10 MW/min.</p>
+
+                    <!-- Interactive canvas removed -->
+
+                    <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200 mt-8">Pérdida de Inercia</h3>
+                    <div
+                        class="bg-slate-100 dark:bg-slate-900 p-4 rounded border border-slate-200 dark:border-slate-700 text-center overflow-x-auto font-mono text-sm text-slate-800 dark:text-slate-200">
+                        $$2H \frac{d\omega}{dt} = P_m - P_e - D(\omega - \omega_0)$$
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 mt-4">BESS moderno implementa ecuación del swing con
+                        control Grid-Forming, emulando inercia sintética (H=3-8s) con respuesta instantánea.</p>
+
+                    <div
+                        class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded-r my-4 text-sm text-slate-700 dark:text-slate-300">
+                        ⚠️ <strong>Riesgo Crítico:</strong> Países con alta penetración renovable han experimentado
+                        inestabilidad por falta de inercia. Las normativas post-2023 exigen BESS con capacidad
+                        Grid-Forming nativa.
+                    </div>
+                </div>
+            </section>
+
+            <section id="desafios-tecnicos"
+                class="px-6 py-12 scroll-mt-24 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Desafíos Técnicos Especiales
+                            en Redes Débiles</h2>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm">Según CIGRE y estudios recientes</p>
+                    </div>
+
+                    <!-- Problema 1: Short Circuit Ratio -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">a. SCR Bajo (Short Circuit
+                            Ratio &lt; 1.5)</h3>
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+                            <p class="text-slate-600 dark:text-slate-300">En redes remotas con alta penetración de
+                                renovables, el <strong>Short Circuit Ratio (SCR)</strong> cae por debajo de 1.5,
+                                creando:</p>
+                            <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                                <li class="flex gap-3"><span class="text-primary font-bold">→</span>
+                                    <span><strong>Inestabilidad de voltaje:</strong> Oscilaciones subsíncronas (50–200
+                                        Hz)</span>
+                                </li>
+                                <li class="flex gap-3"><span class="text-primary font-bold">→</span>
+                                    <span><strong>Distorsión armónica elevada:</strong> THD > 8% sin filtros (vs norma
+                                        5%)</span>
+                                </li>
+                                <li class="flex gap-3"><span class="text-primary font-bold">→</span> <span><strong>Falta
+                                            de "amortiguamiento":</strong> Resonancia entre inductancia de línea y
+                                        capacitancia de filtro</span></li>
+                            </ul>
+
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-r">
+                                <p class="text-sm text-slate-700 dark:text-slate-300"><strong>Fórmula SCR:</strong>
+                                    $$SCR = \frac{S_{cc}}{P_{\text{nominal\_BESS}}}$$</p>
+                                <div class="text-xs text-slate-600 dark:text-slate-400 mt-2 space-y-1">
+                                    <p><span class="font-semibold">Modelo:</span> \( SCR =
+                                        \dfrac{S_{cc}}{P_{\text{nominal\_BESS}}} \)</p>
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>\( S_{cc} \): Potencia de cortocircuito trifásico en el PCC (MVA)</li>
+                                        <li>\( P_{\text{nominal\_BESS}} = 100\,\text{MW} \)</li>
+                                    </ul>
+                                    <p class="mt-1">Ejemplo: \( S_{cc} = 150\,\text{MVA} \Rightarrow SCR =
+                                        \dfrac{150}{100} = 1.5 \) (límite crítico)</p>
+                                </div>
+                            </div>
+
+                            <p class="text-sm text-slate-600 dark:text-slate-300"><strong>Solución BESS:</strong>
+                                Inversores Grid-Forming (GFM) con <strong>Voltage Control Loop</strong> rápido
+                                (10&ndash;50&nbsp;ms) y amortiguamiento de impedancia. Implementación de
+                                <strong>Synchronous Condenser emulation</strong> en software.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Problema 2: ROCOF -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">b. ROCOF Elevado (Rate of
+                            Change of Frequency)</h3>
+                        <div class="w-full h-64 flex items-center justify-center">
+                            <img src="http://portal-ingenieria-electrica-pro.com/wp-content/uploads/2025/11/Captura-de-pantalla-2025-11-23-193233.webp"
+                                alt="Frequency Graph"
+                                class="max-w-full max-h-full object-contain rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                        </div>
+
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+                            <p class="text-slate-600 dark:text-slate-300">Ante pérdida de generador (p.ej. falta de rayo
+                                en línea), ROCOF puede alcanzar:</p>
+                            <div class="grid gap-4 md:grid-cols-3">
+                                <div
+                                    class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800">
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Sin BESS (Red débil)</p>
+                                    <p class="text-2xl font-bold text-red-600">\( -2\,\mathrm{Hz/s} \)</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 mt-2">\( \rightarrow \)
+                                        Blackout si relé UF \( > 1\,\mathrm{Hz/s} \)</p>
+                                </div>
+                                <div
+                                    class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800">
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Con BESS Grid-Following</p>
+                                    <p class="text-2xl font-bold text-amber-600">\( -0.8\,\mathrm{Hz/s} \)</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 mt-2">\( \rightarrow \) Mejora
+                                        pero aún crítica</p>
+                                </div>
+                                <div
+                                    class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Con BESS Grid-Forming (GFM)
+                                    </p>
+                                    <p class="text-2xl font-bold text-green-600">\( -0.15\,\mathrm{Hz/s} \)</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 mt-2">\( \rightarrow \) Sistema
+                                        estable ✓</p>
+                                </div>
+                            </div>
+
+                            <div
+                                class="bg-slate-100 dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-700 text-center overflow-x-auto font-mono text-sm text-slate-800 dark:text-slate-200">
+                                $$ROCOF = \frac{df}{dt} = \frac{\Delta P}{2HS} \text{ donde H es Inercia Total
+                                Sistema}$$
+                            </div>
+
+                            <p class="text-sm text-slate-600 dark:text-slate-300"><strong>Capacidad GFM
+                                    requerida:</strong> Mínimo \( 5\text{–}8\,\text{s} \) de \( H \) sintética para red con &lt; 50% renovables.</p>
+                        </div>
+                    </div>
+
+                    <!-- Problema 3: Harmónicas -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">c. Distorsión Armónica &
+                            Interarmónicas</h3>
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+                            <p class="text-slate-600 dark:text-slate-300">Inversores de potencia generan harmónicas
+                                característicos (5, 7, 11, 13) y componentes continuas bajo modulación SVM.</p>
+
+                            <div
+                                class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                                <table class="w-full text-sm">
+                                    <thead
+                                        class="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                                        <tr>
+                                            <th
+                                                class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">
+                                                Harmónica</th>
+                                            <th
+                                                class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">
+                                                Fuente</th>
+                                            <th
+                                                class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">
+                                                Límite IEEE 1547</th>
+                                            <th
+                                                class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">
+                                                Mitigación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300"><strong>Armónicas
+                                                    \(h_3, h_5, h_7\)</strong></td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">Modulación PWM del
+                                                inversor</td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">\( < 4\% \)
+                                                    individual</td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">Filtro LCL
+                                                sintonizado</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
+                                                <strong>Interarmónicas</strong>
+                                            </td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">Chopping frecuencia
+                                                portadora</td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">\( < 2\% \) banda
+                                                    \( \pm 10\,\text{Hz} \)</td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">Filtro activo o
+                                                aumento carrier</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300"><strong>THD
+                                                    Total</strong></td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">Suma todos
+                                                armónicos</td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">\( < 5\% \) (norma
+                                                    2020+)</td>
+                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">Diseño PCS + GSU \(
+                                                K
+                                                \ge 13 \)</td>
+                                        </tr>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+            </section>
+
+            <section id="technology" class="px-6 py-12 scroll-mt-24">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">3. Tecnología BESS</h2>
+                    <img src="http://portal-ingenieria-electrica-pro.com/wp-content/uploads/2025/10/ee74c660de237b830483f55565368f2d885151d7.webp"
+                        alt="BESS Architecture"
+                        class="w-full h-auto rounded-2xl shadow-lg mb-6 border border-slate-200 dark:border-slate-700">
+
+                    <p class="mb-4 text-slate-700 dark:text-slate-300">
+                        La siguiente tabla compara las principales tecnologías de baterías utilizadas en sistemas de almacenamiento de energía (BESS). Se destacan sus ventajas clave y las aplicaciones más comunes de cada una, facilitando la selección de la tecnología más adecuada según las necesidades del proyecto.
+                    </p>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-sm text-left text-slate-600 dark:text-slate-300">
+                            <thead
+                                class="text-xs text-slate-700 uppercase bg-slate-100 dark:bg-slate-800 dark:text-slate-200">
+                                <tr>
+                                    <th class="px-6 py-3">Tecnología</th>
+                                    <th class="px-6 py-3">Ventajas</th>
+                                    <th class="px-6 py-3">Aplicación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white dark:bg-slate-900 border-b dark:border-slate-700">
+                                    <td class="px-6 py-4 font-medium">Lithium-ion (LFP)</td>
+                                    <td class="px-6 py-4">Ciclos &gt; <span class="font-mono">5000</span>, seguridad
+                                        térmica</td>
+                                    <td class="px-6 py-4">&gt; <span class="font-mono">70%</span> instalaciones nuevas
+                                    </td>
+                                </tr>
+                                <tr class="bg-white dark:bg-slate-900 border-b dark:border-slate-700">
+                                    <td class="px-6 py-4 font-medium">Sodio-Ión (Na-Ion)</td>
+                                    <td class="px-6 py-4">Más barato, abundante</td>
+                                    <td class="px-6 py-4">Crecimiento <span class="font-mono">30%</span> anual</td>
+                                </tr>
+                                <tr class="bg-white dark:bg-slate-900">
+                                    <td class="px-6 py-4 font-medium">Flujo Redox</td>
+                                    <td class="px-6 py-4">Ciclos <span class="font-mono">∞</span>, larga duración</td>
+                                    <td class="px-6 py-4">Aplicaciones <span class="font-mono">&gt; 4&nbsp;h</span></td>
+                                </tr>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="trends" class="px-6 py-12 scroll-mt-24 bg-slate-50 dark:bg-slate-800/50">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Tendencias Técnicas</h2>
+                    <div class="grid gap-6 md:grid-cols-2">
+                        <div class="glass-panel p-6 rounded-2xl border-l-4 border-accent">
+                            <h3 class="font-bold text-slate-900 dark:text-white mb-2">Argumentación DC vs AC</h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-300">
+                                El reto de integrar baterías nuevas con viejas. La tendencia favorece la
+                                <strong>Argumentación AC</strong> (nuevos inversores) para evitar el uso masivo de
+                                convertidores DC/DC necesarios para igualar voltajes en el bus DC.
+                            </p>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl border-l-4 border-primary">
+                            <h3 class="font-bold text-slate-900 dark:text-white mb-2">Explosión: NFPA 68 vs 69</h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-300">
+                                Ya no basta con supresión de incendios. Se exige <strong>Venting de Deflagración (NFPA
+                                    68)</strong> para liberar presión y <strong>Ventilación Activa (NFPA 69)</strong>
+                                activada por sensores de gas (H2, CO) antes del evento térmico.
+                            </p>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl border-l-4 border-green-500">
+                            <h3 class="font-bold text-slate-900 dark:text-white mb-2">Grid Forming (GFM)</h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-300">
+                                Capacidad de «Black Start» y operación en redes débiles (SCR < 1.5). Los inversores GFM
+                                    son ahora obligatorios en nuevas interconexiones de CAISO y ERCOT para reemplazar la
+                                    inercia síncrona. </p>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl border-l-4 border-purple-500">
+                            <h3 class="font-bold text-slate-900 dark:text-white mb-2">Ciberseguridad NERC CIP</h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-300">
+                                BESS como infraestructura crítica. Se requiere segmentación de redes (Air-gapped) y
+                                gateways unidireccionales para SCADA, cumpliendo con CIP-005 y CIP-007.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="topologias" class="px-6 py-12 scroll-mt-24 bg-slate-50 dark:bg-slate-800/50">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">4. Topologías de Conexión</h2>
+                    <p class="text-slate-600 dark:text-slate-300"></p>
+                        La selección de la topología de conexión de un sistema BESS en subestaciones depende de factores como la escala del proyecto, la flexibilidad operativa, los requisitos de protección y la facilidad de expansión futura. A continuación se presentan las configuraciones más utilizadas, cada una con ventajas y limitaciones específicas.
+                    </p>
+                    <ul class="list-disc pl-6 text-sm text-slate-600 dark:text-slate-300 space-y-2 mb-6">
+                        <li><strong>Doble transformación:</strong> Permite aislar eléctricamente el BESS y reducir el impacto de armónicos y corrientes de cortocircuito en la red principal.</li>
+                        <li><strong>Distribuida:</strong> Favorece la modularidad y el mantenimiento, facilitando la integración progresiva de nuevos skids o bloques de baterías.</li>
+                        <li><strong>Centralizada LV:</strong> Reduce el número de transformadores y simplifica la protección, pero puede concentrar las corrientes de falla en un solo punto.</li>
+                    </ul>
+                    <div class="grid gap-8 lg:grid-cols-3">
+                        <!-- Opción 1: Doble Transformación -->
+                        <div class="glass-panel rounded-3xl p-6 space-y-4 hover:border-primary/50 transition-colors group">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-bold text-slate-900 dark:text-white">Opción 1: Doble Transformación</h3>
+                                <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-xs font-mono rounded text-slate-500">HV/MV/LV</span>
+                            </div>
+                            <div class="h-40 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center p-4">
+                                <img src="http://portal-ingenieria-electrica-pro.com/wp-content/uploads/2025/11/TP1.webp" 
+                                    alt="Topología Doble Transformación" 
+                                    class="max-h-32 w-auto rounded shadow" 
+                                    draggable="false" />
+                            </div>
+                            <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                                <li>• <strong>Uso:</strong> Grandes parques con distribución interna MV.</li>
+                                <li>• <strong>Ventaja:</strong> Reduce corrientes de cortocircuito en baja.</li>
+                                <li>• <strong>Nota:</strong> Mayor coste inicial, pero mejor aislamiento y flexibilidad para futuras ampliaciones.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Opción 2: Distribuida -->
+                        <div class="glass-panel rounded-3xl p-6 space-y-4 hover:border-primary/50 transition-colors group">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-bold text-slate-900 dark:text-white">Opción 2: Distribuida</h3>
+                                <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-xs font-mono rounded text-slate-500">MV/LV Direct</span>
+                            </div>
+                            <div class="h-40 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center p-4">
+                                <img src="http://portal-ingenieria-electrica-pro.com/wp-content/uploads/2025/11/TP2.webp" 
+                                    alt="Topología Distribuida" 
+                                    class="max-h-32 w-auto rounded shadow" 
+                                    draggable="false" />
+                            </div>
+                            <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                                <li>• <strong>Uso:</strong> Conexión directa de skids a red MV.</li>
+                                <li>• <strong>Ventaja:</strong> Modularidad y expansión simple.</li>
+                                <li>• <strong>Nota:</strong> Ideal para proyectos escalables o con fases de crecimiento.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Opción 3: Centralizada LV -->
+                        <div class="glass-panel rounded-3xl p-6 space-y-4 hover:border-primary/50 transition-colors group">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-bold text-slate-900 dark:text-white">Opción 3: Centralizada LV</h3>
+                                <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-xs font-mono rounded text-slate-500">MV/LV Central</span>
+                            </div>
+                            <div class="h-40 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center p-4">
+                                <img src="http://portal-ingenieria-electrica-pro.com/wp-content/uploads/2025/11/TP3.webp" 
+                                    alt="Topología Centralizada LV" 
+                                    class="max-h-32 w-auto rounded shadow" 
+                                    draggable="false" />
+                            </div>
+                            <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                                <li>• <strong>Uso:</strong> Sistemas compactos con gran transformador central.</li>
+                                <li>• <strong>Ventaja:</strong> Menor costo trafo, altas corrientes LV.</li>
+                                <li>• <strong>Nota:</strong> Requiere especial atención a la protección y dimensionamiento del transformador.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-r text-sm text-slate-700 dark:text-slate-300">
+                        <strong>Recomendación:</strong> La elección de topología debe considerar el <span class="font-mono">Short Circuit Ratio (SCR)</span> de la red, la facilidad de mantenimiento y la compatibilidad con futuras ampliaciones o integración de renovables.
+                    </div>
+                </div>
+            </section>
+
+            <section id="control" class="px-6 py-12 scroll-mt-24">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">5. Control y Protección</h2>
+                    <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">Jerarquía de Control</h3>
+                    <ul class="list-disc pl-6 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+                        <li><strong>1. EMS (Energy Management System):</strong> Despacho diario, optimización económica.
+                            <span class="font-mono text-xs">(minutos/horas)</span>
+                        </li>
+                        <li><strong>2. SCADA/Control:</strong> Señales operador, límites SOC. <span
+                                class="font-mono text-xs">(segundos)</span></li>
+                        <li><strong>3. Reguladores Locales:</strong> Frecuencia, voltaje, droop. <span
+                                class="font-mono text-xs">\(100\text{–}500\,\text{ms}\)</span></li>
+                        <li><strong>4. Protecciones Hardware:</strong> Límites de corriente, temperatura. <span
+                                class="font-mono text-xs">\(&lt; 50\,\text{ms}\)</span></li>
+                    </ul>
+
+                    <div
+                        class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded-r my-4 text-sm text-slate-700 dark:text-slate-300">
+                        <strong>⚠️ Problemas Típicos:</strong> Pérdida de sensibilidad de overcorriente (BESS amplifica
+                        cortocircuito), falla por bloqueo de seccionadores (flujo inverso), nuisance tripping en
+                        arranque.
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== SECCIÓN: PROTECCIONES ADAPTATIVAS ===== -->
+            <section id="protecciones-adaptativas" class="px-6 py-12 scroll-mt-24">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Protecciones Adaptativas para BESS
+                    </h2>
+
+
+                    <div class="grid gap-8 lg:grid-cols-2">
+                        <!-- Esquema 1: Seleccionador Dinámico de Sensibilidad -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Esquema 1: Adaptación Dinámica
+                                de Sensibilidad</h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-300">
+                                Los relés ajustan el umbral de disparo <span class="font-mono text-primary">\(
+                                    I_{\text{pickup}} \)</span> según la dirección de potencia (<span
+                                    class="font-mono">P</span>) y la rampa de variación (<span
+                                    class="font-mono">\(\dot{P}\)</span>):
+                            </p>
+                            <div class="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+                                <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded border-l-4 border-primary">
+                                    <p>
+                                        <strong>Modo Carga (<span
+                                                class="font-mono text-primary"><code>P &lt; 0</code></span>):</strong>
+                                        <span class="font-mono text-primary">\( I_{\text{pickup}} = 1.20\,I_{\text{nom}}
+                                            \)</span>
+                                    </p>
+                                    <p class="text-slate-500 dark:text-slate-400 mt-1">Mayor sensibilidad (menor umbral
+                                        relativo)</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded border-l-4 border-green-500">
+                                    <p>
+                                        <strong>Modo Descarga (<span
+                                                class="font-mono text-green-600"><code>P &gt; 0</code></span>):</strong>
+                                        <span class="font-mono text-green-600">\( I_{\text{pickup}} =
+                                            1.50\,I_{\text{nom}} \)</span>
+                                    </p>
+                                    <p class="text-slate-500 dark:text-slate-400 mt-1">Menor sensibilidad (evita
+                                        disparos por contribución propia)</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded border-l-4 border-amber-500">
+                                    <p>
+                                        <strong>Transición (<span
+                                                class="font-mono text-amber-600"><code>|&#x1D45C;P| &gt; 10\,MW/s</code></span>):</strong>
+                                        <span class="font-mono text-amber-600">\( I_{\text{pickup}} =
+                                            1.35\,I_{\text{nom}} \)</span>
+                                    </p>
+                                    <p class="text-slate-500 dark:text-slate-400 mt-1">Rampa rápida aplica nivel
+                                        intermedio</p>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-slate-100 dark:bg-slate-800 p-3 rounded text-center font-mono text-xs text-slate-700 dark:text-slate-300 space-y-2">
+                                <div>
+                                    $$
+                                    I_{\text{pickup}}(P,\dot{P}) =
+                                    \begin{cases}
+                                    1.20\,I_{\text{nom}}, & P < 0 \land |\dot{P}| \le 10 \\ 1.50\,I_{\text{nom}}, & P> 0
+                                        \land |\dot{P}| \le 10 \\
+                                        1.35\,I_{\text{nom}}, & |\dot{P}| > 10
+                                        \end{cases}
+                                        $$
+                                </div>
+                                <div>
+                                    $$ (V_{\text{bus}} < 0.9\,V_{\text{nom}} \land \dot{V} < -0.5\,\text{V/s}) \implies
+                                        I_{\text{pickup}}=1.10\,I_{\text{nom}} $$ </div>
+                                </div>
+                            </div>
+                            <!-- Esquema 2: Detección de Islanding -->
+                            <div
+                                class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Esquema 2: Anti-islanding
+                                    Mejorado</h3>
+                                <p class="text-sm text-slate-600 dark:text-slate-300">Triple redundancia para detectar
+                                    pérdida de red en <100ms:< /p>
+                                        <div class="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                                            <div
+                                                class="flex items-start gap-3 bg-slate-50 dark:bg-slate-800 p-3 rounded">
+                                                <span
+                                                    class="inline-block w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
+                                                <div>
+                                                    <p><strong>Detección de Frecuencia (ROCOF):</strong> Si&nbsp;<span
+                                                            class="font-mono">\( \frac{df}{dt} < -2\,\text{Hz/s}
+                                                                \)</span>, disparo instantáneo.</p>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="flex items-start gap-3 bg-slate-50 dark:bg-slate-800 p-3 rounded">
+                                                <span
+                                                    class="inline-block w-6 h-6 bg-secondary text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
+                                                <div>
+                                                    <p><strong>Detección de Voltaje (RoCoV):</strong> Si&nbsp;<span
+                                                            class="font-mono">\( \frac{dV}{dt} > \pm 10\,\text{kV/s}
+                                                            \)</span>, activa compuerta anti-islanding.</p>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="flex items-start gap-3 bg-slate-50 dark:bg-slate-800 p-3 rounded">
+                                                <span
+                                                    class="inline-block w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">3</span>
+                                                <div>
+                                                    <p><strong>Test de Impedancia (<span class="font-mono">\(
+                                                                Z_{\text{bus}} \)</span>):</strong> Inyección de
+                                                        corriente de prueba para medir impedancia vista (si aumenta,
+                                                        posible isla).</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-3">Cumple con
+                                            <strong>IEEE 1547-2018 § 4.3.3</strong> (no-intentional islanding).
+                                        </p>
+                            </div>
+                        </div>
+                        <!-- Tabla: Protecciones por Función -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden mx-auto w-full max-w-4xl mt-8">
+                            <div
+                                class="px-6 py-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                                <h3 class="font-bold text-slate-900 dark:text-white">Matriz de Protecciones recomendadas
+                                </h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-slate-600 dark:text-slate-300">
+                                    <thead
+                                        class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left font-semibold">Función ANSI</th>
+                                            <th class="px-4 py-3 text-left font-semibold">Principio</th>
+                                            <th class="px-4 py-3 text-left font-semibold">Tiempo Reacción</th>
+                                            <th class="px-4 py-3 text-left font-semibold">Norma</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 font-mono text-xs">27/59</td>
+                                            <td class="px-4 py-3">Sub/Over Voltaje</td>
+                                            <td class="px-4 py-3">150–200&nbsp;ms</td>
+                                            <td class="px-4 py-3">IEEE C37.108</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 font-mono text-xs">81U/O</td>
+                                            <td class="px-4 py-3">Sub/Over Frecuencia</td>
+                                            <td class="px-4 py-3">50–100&nbsp;ms</td>
+                                            <td class="px-4 py-3">NERC PRC-024</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 font-mono text-xs">81R</td>
+                                            <td class="px-4 py-3">ROCOF (Rate of Change)</td>
+                                            <td class="px-4 py-3">20–50&nbsp;ms</td>
+                                            <td class="px-4 py-3">GB RoCoF</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 font-mono text-xs">50/51</td>
+                                            <td class="px-4 py-3">Overcorriente (Fase)</td>
+                                            <td class="px-4 py-3">100–400&nbsp;ms</td>
+                                            <td class="px-4 py-3">IEC 60255-3</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 font-mono text-xs">67N</td>
+                                            <td class="px-4 py-3">Neutro Direccional</td>
+                                            <td class="px-4 py-3">200–500&nbsp;ms</td>
+                                            <td class="px-4 py-3">IEC 61850-7-4</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-4 py-3 font-mono text-xs">78</td>
+                                            <td class="px-4 py-3">Anti-islanding</td>
+                                            <td class="px-4 py-3">&lt; 100&nbsp;ms</td>
+                                            <td class="px-4 py-3">IEEE 1547 § 4.3</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+            </section>
+
+            <section id="normativas" class="px-6 py-12 scroll-mt-24 bg-slate-50 dark:bg-slate-800/50">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">6. Normativa e Instalación</h2>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h4 class="font-bold text-primary mb-2">IEEE 1547:2018</h4>
+                            <p class="text-sm text-slate-600 dark:text-slate-300">
+                                Estándar de interconexión. Requiere <strong>ride-through</strong> de menos de
+                                <span class="font-mono">150&nbsp;ms</span> y distorsión armónica total
+                                (<strong>THD</strong>) menor al
+                                <span class="font-mono">5&nbsp;%</span>.
+                            </p>
+                        </div>
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h4 class="font-bold text-primary mb-2">NFPA 855:2020</h4>
+                            <p class="text-sm text-slate-600 dark:text-slate-300">
+                                Seguridad contra incendios. Requiere separación mayor a
+                                <span class="font-mono">&gt; 3&nbsp;m</span> entre contenedores y sistemas de supresión
+                                dedicados.
+                            </p>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200 mt-8">Proceso de Instalación
+                        </h3>
+                        <ol class="list-decimal pl-6 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+                            <li><strong>Diseño & Ingeniería (3-6 meses):</strong> Estudios de estabilidad y
+                                coordinación.</li>
+                            <li><strong>Fabricación & FAT (6-9 meses):</strong> Pruebas de BMS y PCS.</li>
+                            <li><strong>Instalación Física (2-4 meses):</strong> Fundaciones, conexión eléctrica.</li>
+                            <li><strong>Comisionamiento & SAT (4-8 semanas):</strong> Energización y pruebas de
+                                performance.</li>
+                        </ol>
+                    </div>
+            </section>
+
+            <!-- ===== SECCIÓN: ESTUDIOS DE COORDINACIÓN TÍPICOS ===== -->
+            <section id="estudios-coordinacion" class="px-6 py-12 scroll-mt-24 bg-slate-50 dark:bg-slate-800/50">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Estudios de Coordinación Requeridos
+                    </h2>
+
+                    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <!-- Estudio 1 -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="text-3xl font-bold text-primary">①</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-slate-900 dark:text-white mb-2">Load Flow (Carga Estática)
+                                    </h3>
+                                    <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                                        <li>• Perfiles horarios 4 estaciones</li>
+                                        <li>• Max/Min carga anual</li>
+                                        <li>• Límites voltaje nodal \( \pm 10\% \)</li>
+                                        <li>• Margen <span class="font-mono">N-1</span> transmisión</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estudio 2 -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="text-3xl font-bold text-secondary">②</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-slate-900 dark:text-white mb-2">Cortocircuito (IEC 60909)
+                                    </h3>
+                                    <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                                        <li>• Falla trifásica con/sin BESS</li>
+                                        <li>• Falla monofásica (tierra)</li>
+                                        <li>• Ampliación de rating equipos</li>
+                                        <li>• Cálculo <span class="font-mono">SCR</span> en PCC</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estudio 3 -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="text-3xl font-bold text-accent">③</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-slate-900 dark:text-white mb-2">Transitorios
+                                        Electromagnéticos</h3>
+                                    <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                                        <li>• Modelado BESS (GFM + control)</li>
+                                        <li>• Inrush transformador \( 20 \times I_{\text{nominal}} \)</li>
+                                        <li>• Energización línea \( \sim 2\,\text{kV} \) picos</li>
+                                        <li>• Recierres automáticos coordinados</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estudio 4 -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="text-3xl font-bold text-green-600">④</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-slate-900 dark:text-white mb-2">Estabilidad Transitoria
+                                    </h3>
+                                    <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                                        <li>• Falla trifásica <span class="font-mono">150–500&nbsp;ms</span></li>
+                                        <li>• Sincronismo con BESS <span class="font-mono">GFM</span></li>
+                                        <li>• Ángulo de rotor <span class="font-mono">δ</span> generadores</li>
+                                        <li>• <span class="font-mono">RoCoF</span> durante evento</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estudio 5 -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="text-3xl font-bold text-purple-600">⑤</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-slate-900 dark:text-white mb-2">Coordinación Protecciones
+                                    </h3>
+                                    <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                                        <li>• Curvas <span class="font-mono">\( I\text{-}t \)</span> de todos los relés
+                                        </li>
+                                        <li>• Adaptación GFM/GFL dinámico</li>
+                                        <li>• Eliminación nuisance tripping</li>
+                                        <li>• Bloqueo de seccionadores</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estudio 6 -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="text-3xl font-bold text-red-600">⑥</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-slate-900 dark:text-white mb-2">Armónicas & Resonancia
+                                    </h3>
+                                    <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                                        <li>• Barrido de frecuencia (IEC 61000-4-13)</li>
+                                        <li>• Puntos de resonancia LC</li>
+                                        <li>• Espectro esperado (IEEE 519)</li>
+                                        <li>• Filtros LCL sintonización</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-6 rounded-r space-y-3">
+                        <h3 class="font-bold text-blue-900 dark:text-blue-100">📋 Documentos Técnicos Asociados:</h3>
+                        <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                            <li>• <strong>CIGRE TB 869 Ch. 2.1-2.3:</strong> Requisitos técnicos y modelado</li>
+                            <li>• <strong>IEEE 1547-2018 Annex B:</strong> Valores y procedimientos de prueba</li>
+                            <li>• <strong>NERC PRC-024-3:</strong> Validación transitoria de GFM (Mandatory 2027)</li>
+                            <li>• <strong>ENTSO-E NC RfG (14.8.2):</strong> Requisitos de sincronismo en red débil</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="mantenimiento" class="px-6 py-12 scroll-mt-24">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">7. Mantenimiento y Ciclo de Vida</h2>
+                    <p class="text-slate-600 dark:text-slate-300">
+                        La capacidad útil de BESS cae con ciclos y edad. Se espera una vida útil de 
+                        <span class="font-mono">15–20&nbsp;años</span> con degradación al <span class="font-mono">70&nbsp;%</span>.
+                    </p>
+                    <div
+                        class="bg-slate-100 dark:bg-slate-900 p-4 rounded border border-slate-200 dark:border-slate-700 text-center overflow-x-auto font-mono text-sm text-slate-800 dark:text-slate-200">
+                        $$C(t) = C_0 \cdot (1 - \alpha \cdot t - \beta \cdot N_{\text{cycle}})$$
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6">Buenas Prácticas de Mantenimiento</h3>
+                        <ul class="list-disc pl-6 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+                            <li><strong>Monitorización continua:</strong> Uso de BMS avanzado para seguimiento de temperatura, voltaje y SOC de cada celda.</li>
+                            <li><strong>Pruebas periódicas:</strong> Realizar pruebas de capacidad y resistencia interna cada 1-2 años.</li>
+                            <li><strong>Inspección visual:</strong> Revisión de conexiones, presencia de corrosión y estado de gabinetes.</li>
+                            <li><strong>Actualización de firmware:</strong> Mantener actualizado el software de BMS y PCS para mejoras de seguridad y eficiencia.</li>
+                            <li><strong>Gestión térmica:</strong> Verificar funcionamiento de sistemas HVAC y alarmas de sobretemperatura.</li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6">Factores que Afectan la Degradación</h3>
+                        <ul class="list-disc pl-6 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+                            <li><strong>Profundidad de descarga (DoD):</strong> Ciclos profundos aceleran la degradación.</li>
+                            <li><strong>Temperatura ambiente:</strong> Altas temperaturas reducen la vida útil.</li>
+                            <li><strong>Corrientes elevadas:</strong> Operación frecuente a alta potencia incrementa el desgaste.</li>
+                            <li><strong>Eventos de sobrecarga o descarga profunda:</strong> Pueden causar fallos prematuros.</li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6">Reemplazo y Reciclaje</h3>
+                        <ul class="list-disc pl-6 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+                            <li><strong>Planificación de reemplazo:</strong> Considerar reemplazo de módulos degradados a partir del 70-80% de capacidad.</li>
+                            <li><strong>Reciclaje:</strong> Seguir normativas locales (p.ej. Directiva Europea 2006/66/CE) para disposición y reciclaje de baterías.</li>
+                            <li><strong>Segunda vida:</strong> Módulos con capacidad residual pueden reutilizarse en aplicaciones menos exigentes.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-cyan-50 dark:bg-cyan-900/20 border-l-4 border-primary p-4 rounded-r my-4 text-sm text-slate-700 dark:text-slate-300">
+                        <strong>Dato:</strong> Fabricantes líderes (CATL, BYD, LGES) ofrecen garantías de ciclo de vida de hasta <span class="font-mono">6,000–8,000</span> ciclos para LFP, con mantenimiento preventivo anual recomendado.
+                    </div>
+                </div>
+            </section>
+
+            <section id="casos" class="px-6 py-12 scroll-mt-24 bg-slate-50 dark:bg-slate-800/50">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">8. Casos de Éxito</h2>
+                    <div class="grid gap-6 md:grid-cols-2">
+                        <div class="glass-panel p-6 rounded-3xl">
+                            <h3 class="font-bold text-slate-900 dark:text-white">Gran Bretaña – Pylons Project</h3>
+                            <p class="text-sm text-slate-500 mt-1">100 MW / 100 MWh</p>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-4">
+                                Integración de más de 800&nbsp;MW eólicos.<br>
+                                RoCoF limitada a \( -0.2\,\mathrm{Hz/s} \) y ahorro anual de £15&nbsp;M+ en congestión.
+                            </p>
+                        </div>
+                        <div class="glass-panel p-6 rounded-3xl">
+                            <h3 class="font-bold text-slate-900 dark:text-white">Australia – Blackout Prevention</h3>
+                            <p class="text-sm text-slate-500 mt-1">250 MW / 140 MWh</p>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-4">Cero blackouts por baja inercia
+                                desde 2021. Penetración renovable subió al 72%.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== SECCIÓN: CASO DE ÉXITO DETALLADO ===== -->
+            <section id="caso-detallado" class="px-6 py-12 scroll-mt-24">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Caso de Éxito: Dinamarca – Repowering
+                        Ringelmose</h2>
+                    <img src="https://images.unsplash.com/photo-1574482620811-1aa16ffe3c82?w=800&h=400&fit=crop"
+                        alt="Wind Farm"
+                        class="w-full h-72 object-cover rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+
+                    <div class="grid gap-6 lg:grid-cols-2">
+                        <!-- Ficha Técnica -->
+                        <div
+                            class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-4">
+                            <h3 class="font-bold text-slate-900 dark:text-white mb-4">📊 Ficha Técnica</h3>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between pb-2 border-b border-slate-300 dark:border-slate-600">
+                                    <span class="text-slate-600 dark:text-slate-400">Capacidad BESS</span>
+                                    <span class="font-bold text-primary">150 MW / 300 MWh</span>
+                                </div>
+                                <div class="flex justify-between pb-2 border-b border-slate-300 dark:border-slate-600">
+                                    <span class="text-slate-600 dark:text-slate-400">Tecnología</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200">Li-ion LFP (CATL)</span>
+                                </div>
+                                <div class="flex justify-between pb-2 border-b border-slate-300 dark:border-slate-600">
+                                    <span class="text-slate-600 dark:text-slate-400">Inversor</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200">GFM (ABB BSCH)</span>
+                                </div>
+                                <div class="flex justify-between pb-2 border-b border-slate-300 dark:border-slate-600">
+                                    <span class="text-slate-600 dark:text-slate-400">Inercia Sintética</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200">\( H = 6.5\,\text{s}
+                                        \)</span>
+                                </div>
+                                <div class="flex justify-between pb-2 border-b border-slate-300 dark:border-slate-600">
+                                    <span class="text-slate-600 dark:text-slate-400">Coste Total</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200">€320 M (€1.07/Wh)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600 dark:text-slate-400">ROI Esperado</span>
+                                    <span class="font-bold text-green-600">7.2 años</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Impacto Operacional -->
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-4">
+                            <h3 class="font-bold text-slate-900 dark:text-white mb-4">✓ Impacto Operacional</h3>
+                            <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                                <li class="flex gap-3">
+                                    <span class="text-green-600 font-bold">✓</span>
+                                    <span><strong>Inercia total:</strong> Aumentó de \(18\,\text{s}\) a
+                                        \(24.5\,\text{s}\) (Dinamarca 2024)</span>
+                                </li>
+                                <li class="flex gap-3">
+                                    <span class="text-green-600 font-bold">✓</span>
+                                    <span><strong>RoCoF máximo:</strong> Limitado a \(-0.3\,\text{Hz/s}\) (vs
+                                        \(-0.8\,\text{Hz/s}\) histórico)</span>
+                                </li>
+                                <li class="flex gap-3">
+                                    <span class="text-green-600 font-bold">✓</span>
+                                    <span><strong>Congestión evitada:</strong> \(1,200\,\text{GWh/año}\) en alivio de
+                                        líneas</span>
+                                </li>
+                                <li class="flex gap-3">
+                                    <span class="text-green-600 font-bold">✓</span>
+                                    <span><strong>Penetración renovables:</strong> Pasó de 68% a 82% sin
+                                        inestabilidad</span>
+                                </li>
+                                <li class="flex gap-3">
+                                    <span class="text-green-600 font-bold">✓</span>
+                                    <span><strong>Eventos evitados:</strong> 3 potenciales blackouts prevenidos en
+                                        2024</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Implementación -->
+                    <div
+                        class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+                        <h3 class="font-bold text-slate-900 dark:text-white mb-4">📅 Timeline Implementación</h3>
+                        <div class="space-y-3">
+                            <div class="flex gap-4">
+                                <div class="min-w-24">
+                                    <span
+                                        class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200 text-xs font-bold rounded">2022-2023</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 dark:text-slate-200">Fase 1: Ingeniería &
+                                        Estudios</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Estudios de estabilidad,
+                                        coordinación protecciones, permisos ambientales</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="min-w-24">
+                                    <span
+                                        class="inline-block px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200 text-xs font-bold rounded">2023-2024</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 dark:text-slate-200">Fase 2: Fabricación &
+                                        Transporte</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Pedido de baterías Catl
+                                        (8 envíos container), inversores ABB, transformador GSU K-13</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="min-w-24">
+                                    <span
+                                        class="inline-block px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 text-xs font-bold rounded">2024
+                                        Q1-Q2</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 dark:text-slate-200">Fase 3: Instalación &
+                                        FAT</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Instalación física 4
+                                        meses, Energización inicial julio, SAT agosto</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="min-w-24">
+                                    <span
+                                        class="inline-block px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 text-xs font-bold rounded">2024
+                                        Q3+</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 dark:text-slate-200">Fase 4: Operación
+                                        Comercial</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Participación en mercados
+                                        regulación frecuencia, picos demanda, Black Start readiness</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="ai-assistant" class="px-6 py-12 scroll-mt-24">
+                <div class="max-w-5xl mx-auto">
+                    <div class="ai-container rounded-2xl overflow-hidden relative">
+                        <div
+                            class="bg-white dark:bg-slate-800 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white shadow-md">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 dark:text-white text-sm">BESS Design Assistant
+                                    </h3>
+                                    <p class="text-xs text-green-500 flex items-center gap-1"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span></p>
+                                </div>
+                            </div>
+                            <div
+                                class="text-xs text-slate-400 font-mono bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded">
+                                v2.4.0</div>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-darkbg h-80 p-6 overflow-y-auto flex flex-col gap-4"
+                            id="chat-window">
+                            <div class="ai-bubble ai-bot shadow-sm">
+                                Hola 👋 Soy tu asistente especializado en diseño BESS.
+                                <br><br>
+                                ¿En qué puedo ayudarte hoy?
+                            </div>
+                            <div class="flex gap-2 mt-2 overflow-x-auto pb-2">
+                                <button onclick="quickAsk('¿Cuál es la separación mínima según NFPA 855?')"
+                                    class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-cardbg border border-slate-200 dark:border-slate-700 rounded-full text-xs text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition">📏
+                                    Separación NFPA</button>
+                                <button onclick="quickAsk('¿Qué protecciones requiere el transformador GSU?')"
+                                    class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-cardbg border border-slate-200 dark:border-slate-700 rounded-full text-xs text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition">🛡️
+                                    Protección GSU</button>
+                                <button onclick="quickAsk('Diferencia entre AC y DC Coupling')"
+                                    class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-cardbg border border-slate-200 dark:border-slate-700 rounded-full text-xs text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition">⚡
+                                    AC vs DC Coupling</button>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                            <div class="flex gap-2">
+                                <input type="text" id="chat-input" placeholder="Escribe tu consulta técnica..."
+                                    class="flex-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition">
+                                <button onclick="sendMessage()"
+                                    class="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg font-bold transition shadow-lg shadow-primary/30 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2 text-center">AI puede cometer errores. Verifica la
+                                información con las normas oficiales.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+         </main>
+    </div>
+
+    <script>
+        // --- Theme & Scroll Logic ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        const progressBar = document.getElementById('progress-bar');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+        });
+
+        const scrollSpyItems = Array.from(navLinks).map(link => ({
+            link,
+            target: document.querySelector(link.getAttribute('href'))
+        })).filter(item => item.target);
+
+        function handleScroll() {
+            const docHeight = document.body.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0;
+            if (progressBar) {
+                progressBar.style.width = `${progress}%`;
+            }
+
+            const focusLine = window.scrollY + window.innerHeight / 3;
+            scrollSpyItems.forEach(({ link, target }) => {
+                const top = target.offsetTop;
+                const bottom = top + target.offsetHeight;
+                if (focusLine >= top && focusLine < bottom) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', handleScroll);
+        handleScroll();
+
+        // --- Canvas Logic ---
+        const canvas = document.getElementById('bessCanvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        let flowMode = 'idle';
+        let offset = 0;
+        let animationId;
+
+        function renderDiagram() {
+            if (!canvas || !ctx) {
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const isDark = html.classList.contains('dark');
+            const colorMain = isDark ? '#94a3b8' : '#475569';
+            const colorAccent = '#0891b2';
+
+            // Layout Coordinates
+            const centerY = canvas.height / 2;
+            const battX = 100;
+            const dcBusX = 220;
+            const invX = 340;
+            const acBusX = 460;
+            const trafoX = 580;
+            const pccX = 700;
+            const gridX = 820;
+
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.font = "bold 11px Inter";
+            ctx.textAlign = "center";
+
+            // --- Draw Connections (Background Lines) ---
+            ctx.beginPath();
+            ctx.strokeStyle = isDark ? '#334155' : '#cbd5e1';
+            ctx.moveTo(battX + 40, centerY);
+            ctx.lineTo(gridX, centerY);
+            ctx.stroke();
+
+            // --- Draw Components ---
+
+            // 1. Battery Bank
+            ctx.fillStyle = isDark ? '#1e293b' : '#ffffff';
+            ctx.strokeStyle = colorMain;
+            ctx.fillRect(battX - 30, centerY - 30, 60, 60);
+            ctx.strokeRect(battX - 30, centerY - 30, 60, 60);
+            // Cells
+            ctx.fillStyle = flowMode === 'charge' ? '#22c55e' : (flowMode === 'discharge' ? '#3b82f6' : colorAccent);
+            ctx.fillRect(battX - 20, centerY - 15, 10, 30);
+            ctx.fillRect(battX - 5, centerY - 15, 10, 30);
+            ctx.fillRect(battX + 10, centerY - 15, 10, 30);
+            ctx.fillStyle = colorMain;
+            ctx.fillText("BESS", battX, centerY + 45);
+
+            // 2. DC Breaker
+            ctx.fillStyle = isDark ? '#0f172a' : '#f1f5f9';
+            ctx.fillRect(dcBusX - 10, centerY - 10, 20, 20);
+            ctx.strokeRect(dcBusX - 10, centerY - 10, 20, 20);
+            ctx.beginPath();
+            ctx.moveTo(dcBusX - 5, centerY - 5); ctx.lineTo(dcBusX + 5, centerY + 5);
+            ctx.moveTo(dcBusX + 5, centerY - 5); ctx.lineTo(dcBusX - 5, centerY + 5);
+            ctx.stroke();
+            ctx.fillText("DC", dcBusX, centerY - 20);
+
+            // 3. Inverter (PCS)
+            ctx.fillStyle = isDark ? '#1e293b' : '#ffffff';
+            ctx.fillRect(invX - 30, centerY - 30, 60, 60);
+            ctx.strokeRect(invX - 30, centerY - 30, 60, 60);
+            ctx.beginPath();
+            ctx.moveTo(invX - 20, centerY + 20); ctx.lineTo(invX + 20, centerY - 20);
+            ctx.stroke();
+            ctx.fillText("PCS", invX, centerY + 45);
+
+            // 4. AC Breaker
+            ctx.fillStyle = isDark ? '#0f172a' : '#f1f5f9';
+            ctx.fillRect(acBusX - 10, centerY - 10, 20, 20);
+            ctx.strokeRect(acBusX - 10, centerY - 10, 20, 20);
+            ctx.beginPath();
+            ctx.moveTo(acBusX - 5, centerY - 5); ctx.lineTo(acBusX + 5, centerY + 5);
+            ctx.moveTo(acBusX + 5, centerY - 5); ctx.lineTo(acBusX - 5, centerY + 5);
+            ctx.stroke();
+            ctx.fillText("AC", acBusX, centerY - 20);
+
+            // 5. Transformer (GSU)
+            ctx.beginPath();
+            ctx.arc(trafoX - 12, centerY, 18, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(trafoX + 12, centerY, 18, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.fillText("GSU", trafoX, centerY + 45);
+
+            // 6. PCC Meter
+            ctx.fillStyle = isDark ? '#0f172a' : '#f1f5f9';
+            ctx.beginPath();
+            ctx.arc(pccX, centerY, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = colorMain;
+            ctx.fillText("M", pccX, centerY + 4);
+            ctx.fillText("PCC", pccX, centerY + 30);
+
+            // 7. Grid
+            ctx.beginPath();
+            ctx.moveTo(gridX, centerY - 25); ctx.lineTo(gridX, centerY + 25);
+            ctx.moveTo(gridX - 15, centerY - 15); ctx.lineTo(gridX + 15, centerY - 15);
+            ctx.moveTo(gridX - 10, centerY - 22); ctx.lineTo(gridX + 10, centerY - 22);
+            ctx.stroke();
+            ctx.fillText("GRID", gridX, centerY + 45);
+
+            // --- Animation Particles ---
+            if (flowMode !== 'idle') {
+                const time = Date.now() / 1000;
+                const colorFlow = flowMode === 'charge' ? '#22c55e' : '#3b82f6';
+
+                // Define segments to animate (skipping components)
+                const segments = [
+                    [battX + 30, dcBusX - 10],
+                    [dcBusX + 10, invX - 30],
+                    [invX + 30, acBusX - 10],
+                    [acBusX + 10, trafoX - 30],
+                    [trafoX + 30, pccX - 15],
+                    [pccX + 15, gridX]
+                ];
+
+                ctx.fillStyle = colorFlow;
+                ctx.shadowColor = colorFlow;
+                ctx.shadowBlur = 8;
+
+                segments.forEach(seg => {
+                    const [start, end] = seg;
+                    const len = end - start;
+                    // Create moving dots
+                    for (let i = 0; i < 1; i++) { // 1 dot per segment for cleaner look
+                        let progress = (time * 0.8 + (start / 1000)) % 1;
+                        if (flowMode === 'charge') progress = 1 - progress;
+
+                        const x = start + len * progress;
+                        ctx.beginPath();
+                        ctx.arc(x, centerY, 3, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                });
+                ctx.shadowBlur = 0;
+            }
+
+            animationId = requestAnimationFrame(renderDiagram);
+        }
+
+        function restartDiagram() {
+            if (!canvas || !ctx) {
+                return;
+            }
+            cancelAnimationFrame(animationId);
+            offset = 0;
+            animationId = requestAnimationFrame(renderDiagram);
+        }
+
+        // window.addEventListener('resize', restartDiagram);
+        // restartDiagram();
+
+        function setFlow(mode) {
+            flowMode = mode;
+        }
+
+        // --- AI Chat Logic ---
+        function quickAsk(text) {
+            document.getElementById('chat-input').value = text;
+            sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const chatWindow = document.getElementById('chat-window');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            // User Message
+            const userBubble = document.createElement('div');
+            userBubble.className = 'ai-bubble ai-user';
+            userBubble.textContent = msg;
+            chatWindow.appendChild(userBubble);
+            input.value = '';
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            // Loading State
+            const loadingBubble = document.createElement('div');
+            loadingBubble.className = 'ai-bubble ai-bot';
+            loadingBubble.innerHTML = '<span class="animate-pulse">Consultando base de datos normativa...</span>';
+            chatWindow.appendChild(loadingBubble);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            // Bot Response (Simulated)
+            setTimeout(() => {
+                chatWindow.removeChild(loadingBubble);
+                const botBubble = document.createElement('div');
+                botBubble.className = 'ai-bubble ai-bot shadow-sm';
+
+                let response = "";
+                const lowerMsg = msg.toLowerCase();
+
+                if (lowerMsg.includes('nfpa') || lowerMsg.includes('separación') || lowerMsg.includes('distancia')) {
+                    response = "<strong>Según NFPA 855 (Edición 2023):</strong><br>• La separación mínima entre grupos de baterías debe ser de <strong>3 pies (914 mm)</strong>.<br>• La distancia a límites de propiedad o edificios debe ser de al menos <strong>10 pies (3.05 m)</strong>.<br>• Alternativamente, se pueden usar barreras resistentes al fuego de 1 hora.";
+                } else if (lowerMsg.includes('gsu') || lowerMsg.includes('transformador')) {
+                    response = "<strong>Recomendación para Transformadores GSU:</strong><br>• Deben especificarse con <strong>Factor K</strong> (típicamente K-4 o K-13) para soportar el contenido armónico de los inversores.<br>• Se recomienda el uso de <strong>pantallas electrostáticas</strong> entre devanados para reducir el acoplamiento capacitivo de alta frecuencia.";
+                } else if (lowerMsg.includes('ac') || lowerMsg.includes('dc') || lowerMsg.includes('coupling')) {
+                    response = "<strong>Comparativa de Topologías:</strong><br>• <strong>AC Coupling:</strong> Mayor flexibilidad y control independiente. Estándar en proyectos Utility Scale.<br>• <strong>DC Coupling:</strong> Mayor eficiencia al compartir inversor con PV (evita clipping), pero mayor complejidad de control.";
+                } else {
+                    response = "Entendido. Estoy analizando tu consulta sobre '<strong>" + msg + "</strong>' cruzando información con IEEE 1547 y CIGRE 869. <br><br>Por favor, especifica si te refieres a protección, control o seguridad para darte una respuesta más precisa.";
+                }
+
+                botBubble.innerHTML = response;
+                chatWindow.appendChild(botBubble);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 1500);
+        }
+    </script>
+</body>
+
+</html>
